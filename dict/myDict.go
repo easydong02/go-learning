@@ -8,6 +8,7 @@ type Money int
 
 var errNotFound = errors.New("Not Found")
 var errWordExists = errors.New("That word already exists")
+var errCantUpdate = errors.New("Can't update non-existing word")
 
 func (d Dictionary) Search(word string) (string, error) {
 	value, exists := d[word]
@@ -28,4 +29,21 @@ func (d *Dictionary) Add(word, def string) error {
 	}
 
 	return nil
+}
+
+func (d Dictionary) Update(word, def string) error {
+	_, err := d.Search(word)
+	switch err {
+	case nil:
+		d[word] = def
+		return nil
+	case errNotFound:
+		return errCantUpdate
+	}
+
+	return nil
+}
+
+func (d Dictionary) Delete(word string) {
+	delete(d, word)
 }

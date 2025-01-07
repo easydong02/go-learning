@@ -1,13 +1,28 @@
 package main
 
 import (
-	"awesomeProject/dict"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 )
 
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
+
+var errRequestFailed = errors.New("Request failed")
+var results = make(map[string]string)
+
+var urls = []string{
+	"https://www.google.com",
+	"https://www.naver.com",
+	"https://www.daum.net",
+	"https://www.github.com",
+	"https://www.youtube.com",
+	"https://www.facebook.com",
+	"https://www.instagram.com",
+	"https://www.twitter.com",
+}
 
 func main() {
 	const name string = "Gopher"
@@ -51,21 +66,37 @@ func main() {
 	//fmt.Println(account)
 	//fmt.Println(account.Balance(), account.Owner())
 
-	mydict := dict.Dictionary{}
-	mydict["first"] = "First"
+	//mydict := dict.Dictionary{}
+	//mydict["first"] = "First"
+	//
+	//definition, err := mydict.Search("first2")
+	//if err != nil {
+	//	fmt.Println(err)
+	//} else {
+	//	fmt.Println(definition)
+	//}
+	//
+	//err = mydict.Add("first", "Greeting")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//
+	//mydict.Update("first", "World")
+	//
+	//mydict.Delete("first")
+	//fmt.Println(mydict)
 
-	definition, err := mydict.Search("first2")
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(definition)
+	for _, url := range urls {
+		result := "OK"
+		err := hitURL(url)
+		if err != nil {
+			result = "FAILED"
+		}
+		results[url] = result
+
 	}
 
-	err = mydict.Add("first", "Greeting")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(mydict)
+	fmt.Println(results)
 }
 
 func multiply(a int, b int) int {
@@ -162,4 +193,13 @@ func structTest() {
 	favFood := []string{"kimchi", "ramen"}
 	nico := person{name: "nico", age: 18, favFood: favFood}
 	fmt.Println(nico)
+}
+
+func hitURL(url string) error {
+	fmt.Println("Checking:", url)
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode >= 400 {
+		return errRequestFailed
+	}
+	return nil
 }
