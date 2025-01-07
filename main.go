@@ -1,8 +1,11 @@
 package main
 
 import (
+	"awesomeProject/accounts"
+	"awesomeProject/dict"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +15,7 @@ import (
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 
 var errRequestFailed = errors.New("Request failed")
+
 var results = make(map[string]string)
 
 var urls = []string{
@@ -26,78 +30,100 @@ var urls = []string{
 }
 
 func main() {
+	//practiceBasicGrammar()
+	//
+	//pointerTest()
+	//
+	//arrayTest()
+	//
+	//mapTest()
+	//
+	//structTest()
+	//
+	//practiceAccount()
+	//
+	//practiceDictionary()
+
+	practiceUrlChecker()
+
+	//practiceChannel()
+}
+
+func practiceDictionary() {
+	mydict := dict.Dictionary{}
+	mydict["first"] = "First"
+
+	definition, err := mydict.Search("first2")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(definition)
+	}
+
+	err = mydict.Add("first", "Greeting")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	mydict.Update("first", "World")
+
+	mydict.Delete("first")
+	fmt.Println(mydict)
+}
+
+func practiceAccount() error {
+	account := accounts.NewAccount("zaur")
+	account.Deposit(10000)
+	err := account.Withdraw(1500)
+	if err != nil {
+		//log.Fatal은 프로그램을 종료시킴
+		log.Fatalln(err)
+	}
+
+	fmt.Println(account)
+	fmt.Println(account.Balance(), account.Owner())
+	return err
+}
+
+func practiceBasicGrammar() {
 	const name string = "Gopher"
 
-	//fmt.Println(multiply(2, 3))
-	//
-	//fmt.Println(lenAndUpper(name))
-	//
-	//totalLength, upperName := lenAndUpper(name)
-	//
-	//fmt.Println(totalLength, upperName)
-	//
-	//repeatMe("nico", "lynn", "dal", "marl", "flynn")
+	fmt.Println(multiply(2, 3))
 
-	//fmt.Println(nakedReturn("zaur"))
-	//
-	//deferTest()
-	//
-	//fmt.Println(superAdd(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
-	//
-	//fmt.Println(canIDrink(16))
-	//
-	//fmt.Println(canIDrinkWithSwitch(16))
+	fmt.Println(lenAndUpper(name))
 
-	//pointerTest()
+	totalLength, upperName := lenAndUpper(name)
 
-	//arrayTest()
+	fmt.Println(totalLength, upperName)
 
-	//mapTest()
+	repeatMe("nico", "lynn", "dal", "marl", "flynn")
 
-	//structTest()
+	fmt.Println(nakedReturn("zaur"))
 
-	//account := accounts.NewAccount("zaur")
-	//account.Deposit(10000)
-	//err := account.Withdraw(1500)
-	//if err != nil {
-	//	//log.Fatal은 프로그램을 종료시킴
-	//	log.Fatalln(err)
-	//}
-	//
-	//fmt.Println(account)
-	//fmt.Println(account.Balance(), account.Owner())
+	deferTest()
 
-	//mydict := dict.Dictionary{}
-	//mydict["first"] = "First"
-	//
-	//definition, err := mydict.Search("first2")
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	fmt.Println(definition)
-	//}
-	//
-	//err = mydict.Add("first", "Greeting")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//
-	//mydict.Update("first", "World")
-	//
-	//mydict.Delete("first")
-	//fmt.Println(mydict)
+	fmt.Println(superAdd(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
 
-	//for _, url := range urls {
-	//	result := "OK"
-	//	err := hitURL(url)
-	//	if err != nil {
-	//		result = "FAILED"
-	//	}
-	//	results[url] = result
-	//
-	//}
-	//
-	//fmt.Println(results)
+	fmt.Println(canIDrink(16))
+
+	fmt.Println(canIDrinkWithSwitch(16))
+}
+
+func practiceUrlChecker() {
+	c := make(chan result)
+	for _, url := range urls {
+		go hitURL(url, c)
+	}
+
+	for i := 0; i < len(urls); i++ {
+		result := <-c
+		results[result.url] = result.status
+	}
+
+	fmt.Println(results)
+}
+
+func practiceChannel() {
 	c := make(chan string)
 	people := []string{"zaur", "donghee", "flynn", "marl", "dal"}
 	for _, person := range people {
@@ -211,13 +237,15 @@ func structTest() {
 	fmt.Println(nico)
 }
 
-func hitURL(url string) error {
+// chan<- is send only
+func hitURL(url string, c chan<- result) {
 	fmt.Println("Checking:", url)
+	status := "OK"
 	resp, err := http.Get(url)
 	if err != nil || resp.StatusCode >= 400 {
-		return errRequestFailed
+		status = "FAILED"
 	}
-	return nil
+	c <- result{url: url, status: status}
 }
 
 // main() 은 goroutine을 기다리지 않고 바로 종료됨
@@ -232,4 +260,9 @@ func sexyCount(person string) {
 func isSexy(person string, c chan string) {
 	time.Sleep(time.Second * 5)
 	c <- person + " is sexy"
+}
+
+type result struct {
+	url    string
+	status string
 }
