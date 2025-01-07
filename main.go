@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
@@ -86,17 +87,32 @@ func main() {
 	//mydict.Delete("first")
 	//fmt.Println(mydict)
 
-	for _, url := range urls {
-		result := "OK"
-		err := hitURL(url)
-		if err != nil {
-			result = "FAILED"
-		}
-		results[url] = result
-
+	//for _, url := range urls {
+	//	result := "OK"
+	//	err := hitURL(url)
+	//	if err != nil {
+	//		result = "FAILED"
+	//	}
+	//	results[url] = result
+	//
+	//}
+	//
+	//fmt.Println(results)
+	c := make(chan string)
+	people := []string{"zaur", "donghee", "flynn", "marl", "dal"}
+	for _, person := range people {
+		go isSexy(person, c)
 	}
 
-	fmt.Println(results)
+	//fmt.Println("waiting for messages")
+	//// 채널은 메시지를 받을 때까지 기다림 그냥 먼저 오는거 받음
+	//fmt.Println("receive this message", <-c)
+	//fmt.Println("receive this message", <-c)
+
+	for _, val := range people {
+		fmt.Print("waiting for ", val, " ")
+		fmt.Println(<-c)
+	}
 }
 
 func multiply(a int, b int) int {
@@ -202,4 +218,18 @@ func hitURL(url string) error {
 		return errRequestFailed
 	}
 	return nil
+}
+
+// main() 은 goroutine을 기다리지 않고 바로 종료됨
+func sexyCount(person string) {
+	for i := 0; i < 10; i++ {
+		fmt.Println(person, "is sexy", i)
+		time.Sleep(time.Second)
+	}
+}
+
+// 채널은 채널 타입 뒤에 메인 함수로 보낼 타입도 적음
+func isSexy(person string, c chan string) {
+	time.Sleep(time.Second * 5)
+	c <- person + " is sexy"
 }
