@@ -17,15 +17,21 @@ type extractedResult struct {
 
 func main() {
 	var allUrls []extractedResult
+	c2 := make(chan []extractedResult)
 	pages := getPages()
 	fmt.Println(pages)
 
-	for i := 0; i < pages/2; i++ {
-		urls := getPage(i)
+	for i := 0; i < pages-2; i++ {
+		go getPage(i, c2)
+	}
+
+	for i := 0; i < pages-2; i++ {
+		urls := <-c2
 		allUrls = append(allUrls, urls...)
 	}
 
 	writeUrls(allUrls)
+	fmt.Println("jobs Done.")
 }
 
 func writeUrls(urls []extractedResult) {
@@ -47,8 +53,9 @@ func writeUrls(urls []extractedResult) {
 	}
 }
 
-func getPage(pageNumber int) []extractedResult {
-	var results []extractedResult
+func getPage(pageNumber int, c2 chan<- []extractedResult) {
+	var urls []extractedResult
+	c := make(chan extractedResult)
 	pageURL := baseURL + fmt.Sprintf("start=%d&where=web", 1+(15*pageNumber))
 	fmt.Println("Requesting", pageURL)
 	res, err := http.Get(pageURL)
@@ -62,15 +69,22 @@ func getPage(pageNumber int) []extractedResult {
 
 	finds := doc.Find("a.link_tit")
 	finds.Each(func(i int, selection *goquery.Selection) {
-		val, exists := selection.Attr("href")
-		if exists {
-			result := extractedResult{url: val}
-			results = append(results, result)
-		}
+		go extractUrl(selection, c)
 	})
 
-	fmt.Println("------------------------------------------")
-	return results
+	for i := 0; i < finds.Length(); i++ {
+		url := <-c
+		urls = append(urls, url)
+	}
+
+	c2 <- urls
+}
+
+func extractUrl(selection *goquery.Selection, c chan<- extractedResult) {
+	val, exists := selection.Attr("href")
+	if exists {
+		c <- extractedResult{url: val}
+	}
 }
 
 func getPages() int {
